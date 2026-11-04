@@ -1,0 +1,427 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Tama-Gotchi</title>
+  <style>
+    :root {
+      --bg-1: #0f0f16;
+      --bg-2: #1b1422;
+      --panel: rgba(19, 20, 30, 0.85);
+      --panel-border: rgba(255, 255, 255, 0.12);
+      --text: #fefaff;
+      --muted: #d0c7e9;
+      --accent: #ff9fdc;
+      --accent-2: #ffd8f0;
+      --button: #f8b7e6;
+      --button-text: #2c1630;
+      --shadow: rgba(0, 0, 0, 0.35);
+    }
+
+    * { box-sizing: border-box; }
+
+    html, body {
+      margin: 0;
+      min-height: 100%;
+      font-family: "Segoe UI", "Hiragino Sans", sans-serif;
+      background: radial-gradient(circle at top, #1d1c2b 0%, var(--bg-1) 35%, var(--bg-2) 100%);
+      color: var(--text);
+    }
+
+    body {
+      min-height: 100vh;
+      display: grid;
+      place-items: center;
+      padding: 24px;
+    }
+
+    .app {
+      width: min(980px, 100%);
+      background: rgba(11, 13, 19, 0.8);
+      border: 1px solid var(--panel-border);
+      border-radius: 32px;
+      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.45);
+      overflow: hidden;
+      backdrop-filter: blur(8px);
+    }
+
+    .shell {
+      display: grid;
+      grid-template-columns: 1.2fr 1fr;
+      gap: 24px;
+      padding: 28px;
+    }
+
+    .stage {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      min-height: 620px;
+      background: rgba(255, 255, 255, 0.02);
+      border: 1px solid rgba(255,255,255,0.08);
+      border-radius: 26px;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .egg-wrap {
+      position: relative;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: min(72vw, 520px);
+      aspect-ratio: 1 / 1.1;
+      filter: drop-shadow(0 26px 28px rgba(0,0,0,0.25));
+    }
+
+    .egg {
+      width: 78%;
+      height: 100%;
+      object-fit: contain;
+      transition: transform 180ms ease;
+      transform: translateY(0);
+    }
+
+    .egg:hover { transform: translateY(-4px) scale(1.01); }
+
+    .orbital {
+      position: absolute;
+      inset: auto 10% 14% 10%;
+      height: 18px;
+      border-radius: 50%;
+      background: rgba(255,255,255,0.12);
+      filter: blur(8px);
+      opacity: 0.7;
+    }
+
+    .panel {
+      padding: 22px 18px 18px;
+      display: flex;
+      flex-direction: column;
+      gap: 18px;
+    }
+
+    .topbar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 20px;
+    }
+
+    .badge {
+      font-size: 0.74rem;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: var(--muted);
+      background: rgba(255,255,255,0.04);
+      border: 1px solid rgba(255,255,255,0.12);
+      padding: 8px 10px;
+      border-radius: 999px;
+    }
+
+    h1 {
+      margin: 0;
+      font-size: clamp(2rem, 3vw, 3.1rem);
+      line-height: 1.05;
+      letter-spacing: 0.04em;
+    }
+
+    .meta {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      margin-top: 2px;
+    }
+
+    .name {
+      font-size: 1.2rem;
+      color: var(--muted);
+      letter-spacing: 0.06em;
+    }
+
+    .status {
+      font-weight: 700;
+      font-size: 0.92rem;
+      background: rgba(255,255,255,0.05);
+      border: 1px solid rgba(255,255,255,0.08);
+      border-radius: 999px;
+      padding: 8px 12px;
+      color: #f6e7ff;
+    }
+
+    .button-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin-top: 4px;
+    }
+
+    button {
+      border: 0;
+      border-radius: 14px;
+      padding: 11px 16px;
+      font: inherit;
+      font-weight: 700;
+      cursor: pointer;
+      transition: transform 140ms ease, filter 140ms ease, opacity 140ms ease;
+    }
+
+    button:hover { transform: translateY(-1px); }
+    button:active { transform: translateY(0); }
+
+    .action {
+      background: linear-gradient(135deg, #ffd9f4, #ffb4df);
+      color: var(--button-text);
+      box-shadow: 0 8px 22px rgba(255, 137, 204, 0.24);
+    }
+
+    .choice {
+      flex: 1;
+      min-width: 120px;
+      background: rgba(255,255,255,0.05);
+      border: 1px solid rgba(255,255,255,0.08);
+      color: var(--text);
+      text-align: left;
+      padding: 12px 14px;
+    }
+
+    .choice.active {
+      background: rgba(255, 164, 219, 0.12);
+      border-color: rgba(255, 164, 219, 0.5);
+      box-shadow: inset 0 0 0 1px rgba(255,164,219,0.35);
+    }
+
+    .choice small {
+      display: block;
+      color: var(--muted);
+      margin-top: 4px;
+    }
+
+    .reply {
+      min-height: 110px;
+      padding: 18px 16px;
+      background: rgba(255,255,255,0.04);
+      border-radius: 18px;
+      border: 1px solid rgba(255,255,255,0.08);
+      line-height: 1.7;
+      color: #f7f3ff;
+    }
+
+    form {
+      display: flex;
+      gap: 10px;
+      margin-top: 6px;
+    }
+
+    input {
+      flex: 1;
+      min-width: 0;
+      background: rgba(255,255,255,0.04);
+      border: 1px solid rgba(255,255,255,0.12);
+      color: var(--text);
+      border-radius: 14px;
+      padding: 14px 16px;
+      font: inherit;
+    }
+
+    input::placeholder { color: rgba(255,255,255,0.45); }
+
+    .send {
+      background: linear-gradient(135deg, #d7faff, #b8f9f5);
+      color: #113b3f;
+      min-width: 100px;
+    }
+
+    @media (max-width: 820px) {
+      .shell {
+        grid-template-columns: 1fr;
+      }
+
+      .stage {
+        min-height: 500px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="app">
+    <div class="shell">
+      <section class="stage" aria-label="育てるたまごの見た目">
+        <div class="egg-wrap">
+          <img class="egg" id="egg" src="/images/egg-magenta.png" alt="たまご" aria-label="たまごのデザイン" />
+          <div class="orbital" aria-hidden="true"></div>
+        </div>
+      </section>
+
+      <aside class="panel">
+        <div class="topbar">
+          <div class="badge">Tama-Gotchi</div>
+          <div class="status" id="status">満腹度 72 / 100</div>
+        </div>
+
+        <div>
+          <h1>ぷくっとたまご</h1>
+          <div class="meta">
+            <div class="name">ぴこ</div>
+            <div class="status" id="mood">元気モード</div>
+          </div>
+        </div>
+
+        <div class="button-row" id="color-choices" aria-label="たまごのデザインを選ぶ">
+          <button class="choice active" type="button" data-style="magenta">
+            マゼンタ渦
+            <small>キラキラ</small>
+          </button>
+          <button class="choice" type="button" data-style="mint">
+            ミント渦
+            <small>さわやか</small>
+          </button>
+          <button class="choice" type="button" data-style="orange">
+            オレンジ大理石
+            <small>ほっこり</small>
+          </button>
+        </div>
+
+        <div class="reply" id="reply" aria-live="polite">
+          こんにちは！今日はすこしきれいな空気だね。<br />ぽかぽかしてるよ。
+        </div>
+
+        <form id="chat" autocomplete="off">
+          <input id="message" type="text" maxlength="500" placeholder="ぴこに話しかけよう" aria-label="ぴこに話しかける" />
+          <button class="send" id="send" type="submit">話す</button>
+        </form>
+      </aside>
+    </div>
+  </div>
+
+  <script>
+    const egg = document.getElementById('egg');
+    const reply = document.getElementById('reply');
+    const status = document.getElementById('status');
+    const mood = document.getElementById('mood');
+    const message = document.getElementById('message');
+    const send = document.getElementById('send');
+    const colorChoices = document.getElementById('color-choices');
+
+    let fullness = 72;
+    let happiness = 76;
+    let energy = 80;
+    let isEggState = true;
+    let conversationCount = 0;
+
+    function updateMood() {
+      if (fullness < 30) {
+        mood.textContent = 'お腹すいたよ';
+      } else if (happiness < 40) {
+        mood.textContent = 'ちょっとさみしい';
+      } else if (energy < 40) {
+        mood.textContent = 'おやすみ中';
+      } else {
+        mood.textContent = '元気モード';
+      }
+
+      status.textContent = `満腹度 ${fullness} / 100`;
+    }
+
+    function updateEggStateUI() {
+      if (isEggState) {
+        colorChoices.style.display = 'none';
+        egg.setAttribute('aria-label', 'たまごのデザイン（卵状態）');
+      } else {
+        colorChoices.style.display = 'flex';
+        egg.setAttribute('aria-label', 'キャラクター');
+      }
+    }
+
+    function hatchEgg() {
+      isEggState = false;
+      egg.src = '/images/character-hanamaru.png';
+      updateEggStateUI();
+      reply.textContent = 'ぴこが孵化したよ！ ようこそ、新しい世界へ！';
+      updateMood();
+    }
+
+    // Egg image paths
+    const eggImages = {
+      magenta: '/images/egg-magenta.png',
+      mint: '/images/egg-mint.png',
+      orange: '/images/egg-orange.png'
+    };
+
+    function renderEgg() {
+      const currentSrc = egg.src;
+      const choices = document.querySelectorAll('.choice');
+      choices.forEach((button) => {
+        const style = button.dataset.style;
+        const isActive = currentSrc.includes(eggImages[style]);
+        button.classList.toggle('active', isActive);
+      });
+    }
+
+    function setEggStyle(style) {
+      if (eggImages[style]) {
+        egg.src = eggImages[style];
+        renderEgg();
+      }
+    }
+
+    document.querySelectorAll('.choice').forEach((button) => {
+      button.addEventListener('click', () => {
+        setEggStyle(button.dataset.style);
+        reply.textContent = 'たまごの模様がきれいに変わったよ！';
+      });
+    });
+
+    setInterval(() => {
+      fullness = Math.max(0, fullness - 2);
+      happiness = Math.max(0, happiness - 1);
+      energy = Math.max(0, energy - 1);
+      updateMood();
+    }, 15000);
+
+    document.getElementById('chat').addEventListener('submit', async (event) => {
+      event.preventDefault();
+      const text = message.value.trim();
+      if (!text || send.disabled) return;
+
+      send.disabled = true;
+      reply.textContent = '考え中……';
+
+      try {
+        const response = await fetch('/api/talk', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ message: text, fullness, hatched: !isEggState })
+        });
+
+        const data = await response.json();
+        if (!response.ok) {
+          throw new Error(data.error || '通信に失敗しました');
+        }
+
+        reply.textContent = data.reply;
+        message.value = '';
+
+        // Increment conversation count and check for hatching
+        if (isEggState) {
+          conversationCount++;
+          if (conversationCount >= 8) {
+            hatchEgg();
+          }
+        }
+      } catch (error) {
+        reply.textContent = error.message || 'うまく返事できなかったよ。';
+      } finally {
+        send.disabled = false;
+      }
+    });
+
+    updateMood();
+    renderEgg();
+    updateEggStateUI();
+  </script>
+</body>
+</html>
